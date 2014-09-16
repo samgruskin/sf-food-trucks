@@ -18,10 +18,10 @@
 	// Use Yelp data to guess food truck hours.
 	function get_yelp_data_for_truck($vendor_name, $lat, $long) {
 		// Configuration.
-		$consumer_key = 'AWlPaJb3wIoEQsjSttw23Q';
-		$consumer_secret = 'kFbLDMqxFMYnz0E3qc8tDKnwkFk';
-		$token = 'KwYAlz6BUP09hK7jCMQMVaVdbfiBOJpF';
-		$token_secret = '5OugPyEKrsrktFj280l_JzB-5N4';
+		$consumer_key = '';
+		$consumer_secret = '';
+		$token = '';
+		$token_secret = '';
 		
 		// Search params.
 		$params = array(
