@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>SF Food Trucks</title>
+		 <style type="text/css">
+		 	body {
+		 		font-family: Arial, sans-serif;
+		 		text-align: center;
+		 	}
+		 	h1 , hr {
+		 		width: 800px;
+		 		margin: 10px auto;
+		 	}
+		 	#datasrc {
+		 		margin: 0 auto;
+		 		color: #999;
+		 		font-size: 11px;
+		 		font-style: italic;
+		 		text-align: center;
+		 	}
+		 	#datasrc a {
+		 		text-decoration: none;
+		 		font-weight: bold;
+		 		color: #999;
+		 	}
+		 	#map {
+		 		width: 800px;
+		 		height: 500px;
+		 		margin: 15px auto 0;
+		 	}
+		 	#loading {
+		 		font-size: 16px;
+		 		font-style: italic;
+		 		color: #999;
+		 	}
+		 	#loading img {
+		 		height: 12px;
+		 		position: relative;
+		 		top: 4px;
+		 		right: 4px;
+		 	}
+		 	#infoContent #info {
+		 		display: inline-block;
+		 		float: right;
+		 		text-align: left;
+		 		width: 250px;
+		 		margin: 0 0 0 10px;
+		 	}
+		 	#infoContent #info h3 {
+		 		margin: 0;
+		 		padding: 0;
+		 	}
+		 	#infoContent #info ul {
+		 		list-style: none;
+		 		margin: 0;
+		 		padding: 0;
+		 	}
+		 	#infoContent img {
+		 		float: left;
+		 		width: 100px;
+		 		height: 100px;
+		 		margin: 5px 0 0 0;
+		 	}
+			#search-map {
+				background-color: #FFF;
+				margin-top: 6px;
+				padding: 0 11px 0 13px;
+				width: 400px;
+				font-family: Roboto;
+				font-size: 15px;
+				font-weight: 300;
+				text-overflow: ellipsis;
+			}
+
+			#search-map:focus {
+				border-color: #4d90fe;
+				margin-left: -1px;
+				width: 401px;
+			}
+		 </style>
+		 <script 
+		 	type="text/javascript" 
+		 	src="http://maps.google.com/maps/api/js?libraries=places&sensor=false">
+		 </script>
+		 <script type="text/javascript">
+		 	var map;
+		 	var infoWindow = new google.maps.InfoWindow();
+			function initialize() {     
+				// Draw map.
+				var sfLatLng = new google.maps.LatLng(37.7749300, -122.4194200);
+				var mapOptions = {
+					zoom: 12,
+					center: sfLatLng,
+					mapTypeId: google.maps.MapTypeId.ROADMAP,
+				};
+				map = new google.maps.Map(document.getElementById('map'), mapOptions);
+				
+				// Create search input on map.
+				var input = document.getElementById('search-map');
+				map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+				var searchBox = new google.maps.places.SearchBox(input);
+				var searchMarker = new google.maps.Marker();
+				google.maps.event.addListener(searchBox, 'places_changed', function() {
+					var places = searchBox.getPlaces();
+					if (places.length == 0) {
+						return;
+					}
+					searchMarker.setMap(null);
+					searchMarker = new google.maps.Marker({
+						map: map,
+						title: places[0].name,
+						position: places[0].geometry.location
+					});
+					map.setCenter(places[0].geometry.location);
+					map.setZoom(14);
+				});
+				google.maps.event.addListener(map, 'bounds_changed', function() {
+					var bounds = map.getBounds();
+					searchBox.setBounds(bounds);
+				});
+				
+				// Plot current location if it's available.
+				if(navigator.geolocation) {
+					navigator.geolocation.getCurrentPosition(function(position) {
+						var currentLatLng = new google.maps.LatLng(
+							position.coords.latitude,position.coords.longitude);
+						var marker = new google.maps.Marker({
+							position: currentLatLng,
+							map: map,
+							title: "Current Location",
+							icon: "images/geoloc.png"
+						});
+						// Create custom button to center map on this current location.
+						var controlDiv = document.createElement('div');
+						controlDiv.style.padding = '5px';
+						var controlUI = document.createElement('div');
+						controlUI.style.backgroundColor = 'white';
+						controlUI.style.borderColor = '#888';
+						controlUI.style.borderStyle = 'solid';
+						controlUI.style.borderWidth = '1px';
+						controlUI.style.marginTop = '1px';
+						controlUI.style.cursor = 'pointer';
+						controlUI.style.textAlign = 'center';
+						controlUI.title = 'Click to center map on your current location';
+						controlDiv.appendChild(controlUI);
+						var controlText = document.createElement('div');
+						controlText.style.fontFamily = 'Arial,sans-serif';
+						controlText.style.fontSize = '12px';
+						controlText.style.paddingLeft = '4px';
+						controlText.style.paddingRight = '4px';
+						controlText.style.paddingTop = '1px';
+						controlText.style.paddingBottom = '1px';
+						controlText.innerHTML = '<b>Current Location</b>';
+						controlUI.appendChild(controlText);
+						google.maps.event.addDomListener(controlUI, 'click', function() {
+							map.setCenter(currentLatLng);
+							map.setZoom(13);
+						});
+						map.controls[google.maps.ControlPosition.TOP_RIGHT].push(
+							controlDiv);
+					});
+				}
+			};
+			
+			function addMarker(foodTruck) {
+				var markerImage = "images/food_truck_icon.png";
+				var truckLatLng = new google.maps.LatLng(
+					foodTruck.latitude,
+					foodTruck.longitude
+				);
+				var marker = new google.maps.Marker({
+				  position: truckLatLng,
+				  map: map,
+				  title: foodTruck.vendorname,
+				  icon: markerImage
+				});
+				
+				var infoWindowContent = '<div id="infoContent">'+
+					'<img src="' + foodTruck.thumbnail + '" />' +
+					'<div id="info"><h3>' + foodTruck.vendorname + '</h3><ul>';	
+				if (foodTruck.phone) {
+					infoWindowContent += '<li><a href="tel://' + foodTruck.phone + '">' +
+						foodTruck.displayphone + '</a></li>';
+				}
+				infoWindowContent += '<li><em>' + foodTruck.fooditems + '</em></li>' +
+					'<li><a href="' + foodTruck.yelpurl + '">' + foodTruck.yelpurl + 
+					'</a></li></ul></div></div>';
+				google.maps.event.addListener(marker, 'click', function() {
+					infoWindow.setContent(infoWindowContent);
+					infoWindow.open(map, this);
+				});
+			};
+			
+			// Load Google Map.
+			google.maps.event.addDomListener(window, 'load', initialize);
+			
+			// Get data for map markers.
+			var xhr = new XMLHttpRequest();
+			xhr.onreadystatechange = function() {
+    			if (xhr.readyState == 4 && xhr.status==200) {
+    				var foodTruckJSON = xhr.responseText;
+    				var foodTrucks = JSON.parse(foodTruckJSON);
+    				for (var truckName in foodTrucks) {
+    					var foodTruck = foodTrucks[truckName];
+    					addMarker(foodTruck);
+    				}
+    				document.getElementById("loading").innerHTML = "";
+    			}
+    		}
+    		xhr.open('GET', 'food_truck_data.php', true);
+			xhr.send();
+		</script>
+	</head>
+	<body>
+		<h1>San Francisco's Food Trucks</h1>
+		<hr />
+		<span id="loading">
+			Loading latest food truck data, this may take some time
+			<img src="images/loading.gif" />
+		</span>
+		<input id="search-map" class="controls" type="text" placeholder="Search" />
+		<div id="map"></div>
+		<span id="datasrc">
+			Data cross-sourced from 
+			<a href="https://data.sfgov.org/Economy-and-Community/Mobile-Food-Facility-Permit/rqzj-sfat">
+			DataSF's Mobile Food Facility Permits</a> and 
+			<a href="http://www.yelp.com/developers/documentation/v2/search_api">
+			Yelp's Business Search API</a>.
+		</span>
+	</body>
+</html>
